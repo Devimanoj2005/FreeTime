@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { createServer as createHttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { createServer as createViteServer } from 'vite';
@@ -303,7 +304,17 @@ async function startServer() {
   const app = express();
   const httpServer = createHttpServer(app);
   
-  // Custom headers to prevent framing issues or standard CORS blocks
+  // Enable dynamic CORS with support for credentials, origins, and OPTIONS preflights
+  app.use(cors({
+    origin: (origin, callback) => {
+      // Allow all origins dynamically (crucial for custom domains on Vercel)
+      callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['X-Requested-With', 'content-type', 'Authorization', 'Accept', 'Origin']
+  }));
+
   app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     next();
@@ -311,8 +322,12 @@ async function startServer() {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
+      origin: (origin, callback) => {
+        // Reflect origin dynamically to satisfy browser's credentials constraint
+        callback(null, true);
+      },
+      methods: ['GET', 'POST', 'OPTIONS'],
+      credentials: true
     },
   });
 
