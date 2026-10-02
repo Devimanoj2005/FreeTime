@@ -192,7 +192,7 @@ export default function App() {
     }
 
     const s = io(socketUrl, {
-      transports: ['polling', 'websocket'],
+      transports: ['websocket'],
       autoConnect: true,
       reconnectionAttempts: 5
     });

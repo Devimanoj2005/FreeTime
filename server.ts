@@ -306,10 +306,7 @@ async function startServer() {
   
   // Enable dynamic CORS with support for credentials, origins, and OPTIONS preflights
   app.use(cors({
-    origin: (origin, callback) => {
-      // Allow all origins dynamically (crucial for custom domains on Vercel)
-      callback(null, true);
-    },
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['X-Requested-With', 'content-type', 'Authorization', 'Accept', 'Origin']
@@ -322,10 +319,7 @@ async function startServer() {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: (origin, callback) => {
-        // Reflect origin dynamically to satisfy browser's credentials constraint
-        callback(null, true);
-      },
+      origin: true,
       methods: ['GET', 'POST', 'OPTIONS'],
       credentials: true
     },
