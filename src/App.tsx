@@ -182,8 +182,12 @@ export default function App() {
     const origin = window.location.origin;
     let socketUrl = origin;
     
-    // Fallback if hosted externally (like Vercel) to point directly to our live Express/Socket.IO backend
-    if (origin.includes('vercel.app') || origin.includes('github.io') || origin.includes('netlify.app')) {
+    const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('3000');
+    const isBackend = origin.includes('run.app') || origin.includes('google.com') || origin.includes('aistudio');
+    
+    // If the frontend is hosted on ANY external server (Vercel, custom domain, GitHub Pages, Netlify),
+    // always connect directly to our live Express/Socket.IO backend on Cloud Run!
+    if (!isLocal && !isBackend) {
       socketUrl = 'https://ais-pre-hii3hyruyyej7hsrwst6f3-518523461765.asia-southeast1.run.app';
     }
 
