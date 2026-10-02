@@ -319,7 +319,10 @@ async function startServer() {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: true,
+      origin: (origin, callback) => {
+        // Dynamically reflect origin to fully satisfy credentials requirement (crucial for Vercel + Cloud Run)
+        callback(null, origin || '*');
+      },
       methods: ['GET', 'POST', 'OPTIONS'],
       credentials: true
     },
