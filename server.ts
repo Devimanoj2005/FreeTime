@@ -837,7 +837,7 @@ async function startServer() {
     });
   }
 
-  const port = 3000;
+  const port = process.env.PORT || 3000;
   httpServer.listen(port, () => {
     console.log(`🚀 Name, Place, Things Server listening on port ${port}`);
   });
