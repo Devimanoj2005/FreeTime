@@ -181,7 +181,7 @@ export default function App() {
   useEffect(() => {
     const socketUrl = window.location.origin;
     const s = io(socketUrl, {
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       autoConnect: true,
       reconnectionAttempts: 5
     });
