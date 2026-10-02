@@ -179,7 +179,14 @@ export default function App() {
 
   // Initialize Socket Connection
   useEffect(() => {
-    const socketUrl = window.location.origin;
+    const origin = window.location.origin;
+    let socketUrl = origin;
+    
+    // Fallback if hosted externally (like Vercel) to point directly to our live Express/Socket.IO backend
+    if (origin.includes('vercel.app') || origin.includes('github.io') || origin.includes('netlify.app')) {
+      socketUrl = 'https://ais-pre-hii3hyruyyej7hsrwst6f3-518523461765.asia-southeast1.run.app';
+    }
+
     const s = io(socketUrl, {
       transports: ['polling', 'websocket'],
       autoConnect: true,
