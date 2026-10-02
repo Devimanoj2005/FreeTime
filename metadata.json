@@ -1,0 +1,8 @@
+{
+  "name": "Name, Place, Things Multiplayer Game",
+  "description": "A real-time multiplayer party word game where players compete to write unique words starting with a specific letter under a timer. Powered by Gemini validation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
