@@ -179,20 +179,11 @@ export default function App() {
 
   // Initialize Socket Connection
   useEffect(() => {
-    const origin = window.location.origin;
-    let socketUrl = origin;
-    
-    const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('3000');
-    const isBackend = origin.includes('run.app') || origin.includes('google.com') || origin.includes('aistudio');
-    
-    // If the frontend is hosted on ANY external server (Vercel, custom domain, GitHub Pages, Netlify),
-    // always connect directly to our live Express/Socket.IO backend on Cloud Run!
-    if (!isLocal && !isBackend) {
-      socketUrl = 'https://ais-pre-hii3hyruyyej7hsrwst6f3-518523461765.asia-southeast1.run.app';
-    }
+    const socketUrl = 'https://ais-pre-hii3hyruyyej7hsrwst6f3-518523461765.asia-southeast1.run.app';
 
     const s = io(socketUrl, {
-      transports: ['polling', 'websocket'],
+      path: '/socket.io',
+      transports: ['websocket'],
       autoConnect: true,
       reconnectionAttempts: 5
     });
