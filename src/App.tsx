@@ -179,8 +179,10 @@ export default function App() {
 
   // Initialize Socket Connection
   useEffect(() => {
-    // Use env var for production backend URL, or same origin (local dev / unified host)
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const socketUrl = isLocal
+      ? window.location.origin
+      : (import.meta.env.VITE_SOCKET_URL || 'https://freetime-1-vl7v.onrender.com');
 
     const s = io(socketUrl, {
       path: '/socket.io',
