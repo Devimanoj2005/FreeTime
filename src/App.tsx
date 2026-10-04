@@ -179,12 +179,8 @@ export default function App() {
 
   // Initialize Socket Connection
   useEffect(() => {
-    const origin = window.location.origin;
-    const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('3000');
-    const isBackend = origin.includes('run.app');
-    const socketUrl = (isLocal || isBackend) 
-      ? origin 
-      : 'https://ais-pre-hii3hyruyyej7hsrwst6f3-518523461765.asia-southeast1.run.app';
+    // Use env var for production backend URL, or same origin (local dev / unified host)
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 
     const s = io(socketUrl, {
       path: '/socket.io',
