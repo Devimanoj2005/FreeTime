@@ -3,7 +3,7 @@ import cors from 'cors';
 import { createServer as createHttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI, Type } from '@google/genai';
+// Groq API called via native fetch — no SDK needed
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,17 +13,8 @@ dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Initialize Gemini SDK with telemetry header
-const ai = process.env.GEMINI_API_KEY
-  ? new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        },
-      },
-    })
-  : null;
+// Groq API key (used in validateRoundAnswersGemini via fetch)
+const GROQ_API_KEY = process.env.GROQ_API_KEY ?? null;
 
 interface Player {
   id: string;
@@ -138,7 +129,7 @@ async function validateRoundAnswersGemini(
 
   // Only keep things that matched the starting letter to validate their category fit
   const candidateItems = itemsToValidate.filter((item) => validateWordBasic(item.word, letter));
-  if (candidateItems.length === 0 || !ai) {
+  if (candidateItems.length === 0 || !GROQ_API_KEY) {
     return resultsMap;
   }
 
@@ -158,30 +149,30 @@ You must validate if the words belong to the following categories:
 Here are the submitted answers to adjudicate:
 ${candidateItems.map((item, idx) => `${idx}. Category: "${item.category}" -> Word: "${item.word}"`).join('\n')}
 
-For each answer, return whether it fits the category (isValid) and a short fun reason if it is invalid (max 5 words).
+Respond with a JSON array. Each element must have: index (integer), isValid (boolean), reason (string, max 5 words, only needed when invalid).
 Be somewhat generous but reject complete nonsense or answers that clearly don't fit (e.g. "Spoon" is not an animal).`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              index: { type: Type.INTEGER },
-              isValid: { type: Type.BOOLEAN },
-              reason: { type: Type.STRING },
-            },
-            required: ['index', 'isValid'],
-          },
-        },
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
       },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+      }),
     });
 
-    const parsedResults = JSON.parse(response.text || '[]');
+    const groqData = await groqResponse.json() as { choices?: Array<{ message?: { content?: string } }> };
+    const raw = groqData.choices?.[0]?.message?.content || '{}';
+    // Groq json_object mode returns an object; unwrap array if wrapped
+    const parsed = JSON.parse(raw);
+    const parsedResults: Array<{ index: number; isValid: boolean; reason?: string }> =
+      Array.isArray(parsed) ? parsed : (parsed.results ?? parsed.answers ?? Object.values(parsed));
+
     if (Array.isArray(parsedResults)) {
       parsedResults.forEach((res) => {
         const index = res.index;
@@ -195,8 +186,8 @@ Be somewhat generous but reject complete nonsense or answers that clearly don't 
       });
     }
   } catch (error) {
-    console.error('Gemini verification failed:', error);
-    // Suppress errors and use the standard starting-letter local fallback already prepared in resultsMap
+    console.error('Groq verification failed:', error);
+    // Suppress errors and use the starting-letter local fallback already in resultsMap
   }
 
   return resultsMap;
